@@ -8,6 +8,6 @@ new Vue({
     router: router,
     store: store,
     vuetify: vuetify,
-    render: function (h) { return h(App); }
+    render: function (h) { return h(App); },
 }).$mount('#app');
 //# sourceMappingURL=main.js.map
