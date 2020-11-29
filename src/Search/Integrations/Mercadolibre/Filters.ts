@@ -1,6 +1,6 @@
-import {Search} from '@/Search/Search';
+import {MercadolibreTypes} from "@/Search/Integrations/Mercadolibre/Types";
 
-export const mercadolibreFilters: Record<string, Search.IRealEstateAttribute> = {
+export const mercadolibreFilters: Record<string, MercadolibreTypes.RealEstateAttribute> = {
     real_estate_agency: {
         id: 'real_estate_agency',
         values: {

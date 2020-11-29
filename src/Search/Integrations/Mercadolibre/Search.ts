@@ -1,28 +1,30 @@
 import {Search} from '@/Search/Search';
 import axios from 'axios';
 import {mercadolibreFilters} from '@/Search/Integrations/Mercadolibre/Filters';
+import {MercadolibreApiException} from "@/Search/Integrations/Mercadolibre/Exceptions";
+import {Geo} from "@/Geo";
+import {MercadolibreTypes} from "@/Search/Integrations/Mercadolibre/Types";
+import {SearchTypes} from "@/Search/Types";
 
-// TODO: Add interface for API response
 export class MercadolibreSearch {
     private filters: Record<string, string>;
-    private location: IMercadolibreLocation;
+    private location: Geo.Region;
 
-    constructor(location: IMercadolibreLocation, filters?: Record<string, string>) {
-        this.filters = filters || {};
-        this.location = location;
+    constructor(parameters: { location: Geo.Region, filters?: Record<string, string> }) {
+        this.filters = parameters.filters || {};
+        this.location = parameters.location;
 
         return this;
     }
 
     public async all() {
-        let response = await axios.get(this.computeSearchUrl());
+        let response = await axios
+            .request({url: this.computeSearchUrl(), })
+            .catch(e => { throw new MercadolibreApiException(e)});
+
         let currentOffset: number = 0;
         const resultsByPage: number = 50;
-        let data: object[];
-
-        if (response.status !== 200) {
-            // handle error
-        }
+        let data: MercadolibreTypes.RealEstatePublication[];
 
         data = [...response.data.results];
 
@@ -36,11 +38,11 @@ export class MercadolibreSearch {
         return this.digestDataCollection(data);
     }
 
-    public digestDataCollection(data): object[] {
+    public digestDataCollection(data: MercadolibreTypes.RealEstatePublication[]): object[] {
         const result: object[] = [];
 
         data.forEach((entry) => {
-            const mappedEntry = this.mapEntry(entry);
+            const mappedEntry = this.mapPublication(entry);
             result.push(mappedEntry);
         });
 
@@ -63,24 +65,23 @@ export class MercadolibreSearch {
         return !!this.filters[filter];
     }
 
-    private mapEntry(entry) {
+    mapPublication(realEstatePublication: MercadolibreTypes.RealEstatePublication): SearchTypes.RealEstatePublication {
         return {
-            title: entry.title,
-            price: entry.price,
-            link: entry.permalink,
-            thumbnail: entry.thumbnail,
+            title: realEstatePublication.title,
+            price: realEstatePublication.price,
+            source: Search.Source.Mercadolibre,
+            link: realEstatePublication.permalink,
+            thumbnail: realEstatePublication.thumbnail,
             location: {
-                address: this.parseAddress(entry.location),
-                lat: entry.location.lat,
-                lon: entry.location.lon,
+                address: this.parseAddress(realEstatePublication.location),
+                lat: realEstatePublication.location.lat,
+                lon: realEstatePublication.location.lon,
             },
-            attributes: {
-                // add attributes
-            },
+            attributes: [],
         };
     }
 
-    private parseAddress(location): string {
+    parseAddress(location: MercadolibreTypes.Location): string {
         const neighborhood = location.neighborhood.name;
         const city = location.city.name;
         const addressLine = location.address_line;
@@ -88,7 +89,7 @@ export class MercadolibreSearch {
         return neighborhood ? `${addressLine}, ${neighborhood}, ${city}` : `${addressLine}, ${city}`;
     }
 
-    private computeSearchUrl(offset?: number): string {
+    computeSearchUrl(offset?: number): string {
         let url = 'https://api.mercadolibre.com/sites/MLA/search?'
             + this.getLocation() + 'category=MLA1459' + this.getUrlBaseFilters();
 
@@ -105,30 +106,26 @@ export class MercadolibreSearch {
         return url;
     }
 
-    private getFilters(): Record<string, string> {
+    getFilters(): Record<string, string> {
         return this.filters;
     }
 
-    private getFilterValue(filter: string) {
+    getFilterValue(filter: string) {
         return this.filters[filter];
     }
 
-    private stringifyFilter(filter: string, value: string) {
+    stringifyFilter(filter: string, value: string) {
         return '&' + mercadolibreFilters[filter].id + '=' + mercadolibreFilters[filter].values[value];
     }
 
-    private getUrlBaseFilters(): string {
+    getUrlBaseFilters(): string {
         return '&category=MLA1459&9991459-AMLA_1459_2=9991459-AMLA_1459_2-MMLA12620';
     }
 
-    private getLocation(): string | void {
-        if (this.location.lat && this.location.lon) {
-            return 'item_location=lat:' + this.location.lat + ',lon:' + this.location.lon;
-        }
-    }
-}
+    getLocation(): string | void {
+        const lat = this.location.borders.south + '_' + this.location.borders.north;
+        const lon = this.location.borders.west + '_' + this.location.borders.east;
 
-interface IMercadolibreLocation {
-    lat: string;
-    lon: string;
+        return 'item_location=lat:' + lat + ',lon:' + lon;
+    }
 }

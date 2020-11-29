@@ -6,12 +6,11 @@ export namespace Search {
         Bathrooms = 'bathrooms',
     }
 
-    export interface IRealEstateAttribute {
-        id: string;
-        values: Record<string, string>;
+    export enum Source {
+        Mercadolibre = 'Mercado Libre',
     }
 
-    interface IIntegrationSearch {
+    interface IntegrationSearch {
         getFilters(): Record<string, string>;
 
         search(): object[];

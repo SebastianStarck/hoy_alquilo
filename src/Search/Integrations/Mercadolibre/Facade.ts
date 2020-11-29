@@ -1,13 +1,10 @@
 import {Geo} from '@/Geo';
-import {MercadolibreSearch} from '@/Search/Integrations/Mercadolibre/Mercadolibre';
+import {MercadolibreSearch} from "@/Search/Integrations/Mercadolibre/Search";
 
 export namespace Mercadolibre {
     export class Facade {
         public static newSearch(region: Geo.Region, filters?: Record<string, string>) {
-            const lat = region.borders.south + '_' + region.borders.north;
-            const lon = region.borders.west + '_' + region.borders.east;
-
-            return new MercadolibreSearch({lat, lon}, filters);
+            return new MercadolibreSearch({location: region, filters: filters});
         }
     }
 }

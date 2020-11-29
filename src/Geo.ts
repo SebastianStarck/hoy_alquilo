@@ -6,7 +6,7 @@
  * Δ is the difference between two given numbers
  */
 export namespace Geo {
-    interface GeoPoint {
+    export interface GeoPoint {
         latitude: number;
         longitude: number;
     }
@@ -68,6 +68,7 @@ export namespace Geo {
     export function createRegionFromGeoPoint(geoPoint: GeoPoint, distance?: number): Region {
         distance = ((distance || getDefaultDistance()) * 1000) / 2;
 
+        console.log(distance);
         return {
             center: geoPoint,
             distanceFromCenter: distance,
@@ -82,6 +83,8 @@ export namespace Geo {
         const φ2 = moveGeoPoint(geoPoint, 160, distance);
         const θ2 = moveGeoPoint(geoPoint, 240, distance);
 
+
+        console.log(φ1, φ2, θ1, θ2);
         return {
             north: φ1.latitude,
             east: θ1.longitude,
